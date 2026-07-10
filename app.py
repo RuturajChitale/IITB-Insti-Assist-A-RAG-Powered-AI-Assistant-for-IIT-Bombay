@@ -27,23 +27,21 @@ st.caption(
 @st.cache_resource(show_spinner=False)
 def bootstrap_knowledge_base() -> None:
     """
-    On a fresh deployment (e.g. Streamlit Community Cloud) there's no way
-    to run the setup scripts by hand first, so build the index once here,
-    the first time the app boots. @st.cache_resource means this only runs
-    once per running instance, not on every rerun.
+    Builds the search index from whatever PDFs are present in data/raw/
+    (committed directly to the repo). @st.cache_resource means this only
+    runs once per running instance, not on every rerun.
     """
-    from scripts import build_index, download_sources, ingest
+    from scripts import build_index, ingest
 
-    download_sources.download_all()
     ingest.main()
     build_index.main()
 
 
 if not INDEX_PATH.exists() or not INDEX_META_PATH.exists():
     with st.spinner(
-        "First-time setup: downloading official IITB documents, chunking "
-        "them, and building the search index. This can take a couple of "
-        "minutes and only happens once."
+        "First-time setup: chunking the academic documents and building "
+        "the search index. This can take a minute or two and only "
+        "happens once."
     ):
         bootstrap_knowledge_base()
     st.rerun()
@@ -53,16 +51,20 @@ with st.sidebar:
     st.markdown(
         "**Scope:** Academic Assistant\n\n"
         "Covers course registration, grading/CPI rules, academic "
-        "categories, examination rules, and the academic calendar.\n\n"
+        "categories, examination rules, fees, and the academic calendar.\n\n"
         "The assistant will say **\"I don't know\"** if your question "
-        "isn't covered by the ingested documents (e.g. hostel rules, "
-        "placements) — it will not guess."
+        "isn't covered by the ingested documents — it will not guess."
     )
     st.header("Source documents")
-    from rag.config import SOURCES  # noqa: E402
+    from rag.config import RAW_DIR  # noqa: E402
+    from scripts.ingest import prettify_title  # noqa: E402
 
-    for src in SOURCES:
-        st.markdown(f"- [{src['title']}]({src['url']})")
+    pdf_paths = sorted(RAW_DIR.glob("*.pdf"))
+    if pdf_paths:
+        for p in pdf_paths:
+            st.markdown(f"- {prettify_title(p.stem)}")
+    else:
+        st.caption("No PDFs found in data/raw/ yet.")
 
 if "history" not in st.session_state:
     st.session_state.history = []  # list of (question, RAGResult)

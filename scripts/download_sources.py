@@ -1,12 +1,12 @@
 """
-Downloads the real, official IIT Bombay academic-rules PDFs listed in
-rag/config.py::SOURCES into data/raw/.
+NOTE: This project now expects PDFs to be placed directly in data/raw/
+(and committed to the repo) rather than auto-downloaded, because IITB's
+website blocks/redirects requests coming from cloud hosts like Streamlit
+Community Cloud.
 
-We deliberately do NOT commit the PDFs themselves to the git repo (they are
-copyrighted institute documents, and the files are large) - instead, this
-script re-downloads them from the official acad.iitb.ac.in / iitb.ac.in
-URLs at setup time. This also means the assistant always ingests the
-*current* version of each document.
+This script is kept only as a convenience for local use: it just reports
+what's currently in data/raw/ so you can sanity-check before running
+ingest.py. It does not fetch anything from the internet.
 
 Usage:
     python scripts/download_sources.py
@@ -15,48 +15,32 @@ Usage:
 import sys
 from pathlib import Path
 
-import requests
-
 sys.path.append(str(Path(__file__).resolve().parent.parent))
-from rag.config import RAW_DIR, SOURCES  # noqa: E402
-
-HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (compatible; IITB-Insti-Assist/1.0; "
-        "academic-project; +https://github.com/)"
-    )
-}
+from rag.config import RAW_DIR  # noqa: E402
 
 
 def download_all() -> None:
+    """
+    Kept with this name so app.py / older instructions that call it still
+    work - it no longer downloads anything, it just reports what's present.
+    """
     RAW_DIR.mkdir(parents=True, exist_ok=True)
-    ok, failed = 0, []
+    pdfs = sorted(RAW_DIR.glob("*.pdf"))
 
-    for src in SOURCES:
-        dest = RAW_DIR / f"{src['id']}.pdf"
-        if dest.exists() and dest.stat().st_size > 0:
-            print(f"[skip] {src['id']} already downloaded -> {dest.name}")
-            ok += 1
-            continue
+    if not pdfs:
+        print(
+            f"No PDFs found in {RAW_DIR}.\n"
+            "Add your source PDFs there (any filename works - ingest.py "
+            "picks up every *.pdf automatically), then run:\n"
+            "  python scripts/ingest.py\n"
+            "  python scripts/build_index.py"
+        )
+        return
 
-        print(f"[fetch] {src['title']}\n        {src['url']}")
-        try:
-            resp = requests.get(src["url"], headers=HEADERS, timeout=30)
-            resp.raise_for_status()
-            dest.write_bytes(resp.content)
-            print(f"        saved -> {dest} ({len(resp.content) / 1024:.1f} KB)")
-            ok += 1
-        except Exception as exc:  # noqa: BLE001
-            print(f"        FAILED: {exc}")
-            failed.append(src)
-
-    print(f"\nDone. {ok}/{len(SOURCES)} documents available in {RAW_DIR}/")
-    if failed:
-        print("\nCould not auto-download the following (network / link may have")
-        print("changed). Please download them manually from the URL and save")
-        print("under data/raw/<id>.pdf:")
-        for src in failed:
-            print(f"  - {src['id']}: {src['url']}")
+    print(f"Found {len(pdfs)} PDF(s) in {RAW_DIR}:")
+    for p in pdfs:
+        size_kb = p.stat().st_size / 1024
+        print(f"  - {p.name} ({size_kb:.1f} KB)")
 
 
 if __name__ == "__main__":

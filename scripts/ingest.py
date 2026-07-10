@@ -1,12 +1,16 @@
 """
-Ingestion step: parse every PDF in data/raw/ into text, clean it up, and
-split it into overlapping chunks suitable for embedding.
+Ingestion step: parse every PDF found in data/raw/ into text, clean it up,
+and split it into overlapping chunks suitable for embedding.
+
+Any PDF placed in data/raw/ is picked up automatically - there's no fixed
+list of expected filenames, so you can add/remove/rename source documents
+just by changing what's in that folder and re-running this script.
 
 Output: data/processed/chunks.jsonl, one JSON object per chunk:
     {
-        "chunk_id": "ug_rulebook_0007",
-        "source_id": "ug_rulebook",
-        "source_title": "UG Rule Book (...)",
+        "chunk_id": "some-document_0007",
+        "source_id": "some-document",
+        "source_title": "Some Document",
         "page": 12,
         "text": "..."
     }
@@ -29,11 +33,12 @@ from rag.config import (  # noqa: E402
     CHUNKS_PATH,
     PROCESSED_DIR,
     RAW_DIR,
-    SOURCES,
 )
 
 WHITESPACE_RE = re.compile(r"[ \t]+")
 BLANK_LINES_RE = re.compile(r"\n{3,}")
+TITLE_SEP_RE = re.compile(r"[_\-]+")
+TITLE_SPACE_RE = re.compile(r"\s+")
 
 
 def clean_text(text: str) -> str:
@@ -41,6 +46,13 @@ def clean_text(text: str) -> str:
     text = WHITESPACE_RE.sub(" ", text)
     text = BLANK_LINES_RE.sub("\n\n", text)
     return text.strip()
+
+
+def prettify_title(stem: str) -> str:
+    """Turns a filename stem like 'Hostel_Fee_Circular_New' into a readable title."""
+    title = TITLE_SEP_RE.sub(" ", stem)
+    title = TITLE_SPACE_RE.sub(" ", title).strip()
+    return title
 
 
 def extract_pages(pdf_path: Path) -> list[tuple[int, str]]:
@@ -92,14 +104,17 @@ def chunk_text(text: str, size: int, overlap: int) -> list[str]:
 
 def build_chunks() -> list[dict]:
     all_chunks = []
+    pdf_paths = sorted(RAW_DIR.glob("*.pdf"))
 
-    for src in SOURCES:
-        pdf_path = RAW_DIR / f"{src['id']}.pdf"
-        if not pdf_path.exists():
-            print(f"[warn] missing {pdf_path.name} - run scripts/download_sources.py first. Skipping.")
-            continue
+    if not pdf_paths:
+        print(f"[warn] no PDFs found in {RAW_DIR}. Add PDFs there and re-run.")
+        return all_chunks
 
-        print(f"[parse] {src['title']}")
+    for pdf_path in pdf_paths:
+        source_id = pdf_path.stem
+        source_title = prettify_title(source_id)
+
+        print(f"[parse] {source_title} ({pdf_path.name})")
         pages = extract_pages(pdf_path)
         chunk_counter = 0
 
@@ -108,9 +123,9 @@ def build_chunks() -> list[dict]:
                 chunk_counter += 1
                 all_chunks.append(
                     {
-                        "chunk_id": f"{src['id']}_{chunk_counter:04d}",
-                        "source_id": src["id"],
-                        "source_title": src["title"],
+                        "chunk_id": f"{source_id}_{chunk_counter:04d}",
+                        "source_id": source_id,
+                        "source_title": source_title,
                         "page": page_num,
                         "text": piece,
                     }
@@ -125,7 +140,7 @@ def main() -> None:
     chunks = build_chunks()
 
     if not chunks:
-        print("\nNo chunks produced. Did you run scripts/download_sources.py?")
+        print(f"\nNo chunks produced. Add PDFs to {RAW_DIR} and re-run.")
         return
 
     with open(CHUNKS_PATH, "w", encoding="utf-8") as f:
@@ -137,3 +152,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+

@@ -64,8 +64,9 @@ GROQ_MODEL = _get_secret("GROQ_MODEL", "llama-3.3-70b-versatile")
 
 SYSTEM_PROMPT = """You are IITB Insti-Assist, an academic-rules assistant for \
 students of IIT Bombay. You answer ONLY using the CONTEXT provided below, \
-which is extracted from official IIT Bombay academic documents (UG/PG/PhD \
-rulebooks, grading policy, academic calendar).
+which is extracted from official IIT Bombay academic documents (course \
+info booklet, academic calendar, timetable, fee circulars, procedures, \
+rules for medals/prizes, etc).
 
 Rules you must follow strictly:
 1. Answer using only facts present in the CONTEXT. Do not use outside \
@@ -75,43 +76,7 @@ question, reply exactly with: "I don't know based on the available IIT \
 Bombay academic documents." Do not try to be helpful by guessing.
 3. When you do answer, be precise and cite which source document(s) the \
 answer relies on (you will be given source names alongside each context \
-chunk - refer to them by name, e.g. "According to the UG Rule Book...").
+chunk - refer to them by name).
 4. Keep answers concise and student-friendly, using bullet points for \
-multi-part rules (e.g. grade lists, categories, dates).
+multi-part rules (e.g. grade lists, categories, dates, fee amounts).
 """
-
-# ---------------------------------------------------------------------------
-# Source documents (official, public IIT Bombay academic documents)
-# ---------------------------------------------------------------------------
-SOURCES = [
-    {
-        "id": "ug_rulebook",
-        "title": "UG Rule Book (B.Tech/B.S./Dual Degree Rules & Regulations)",
-        "url": "https://acad.iitb.ac.in/files/UG_RULE_BOOK.pdf",
-    },
-    {
-        "id": "phd_rules",
-        "title": "Ph.D. Programme Rules & Regulations",
-        "url": "https://acad.iitb.ac.in/files/phdRules_3.pdf",
-    },
-    {
-        "id": "mtech_rules",
-        "title": "M.Tech./M.Phil./Dual Degree PG Rules & Regulations",
-        "url": "https://www.iitb.ac.in/newacadhome/MTechRulesupdate201805July.pdf",
-    },
-    {
-        "id": "meng_rules",
-        "title": "M.Eng. Programme Rules",
-        "url": "https://www.iitb.ac.in/newacadhome/MEngRules.pdf",
-    },
-    {
-        "id": "academic_calendar_2025_26",
-        "title": "Academic Calendar 2025-26",
-        "url": "https://acad.iitb.ac.in/sites/default/files/Academic%20Calendar%202025-26_FINAL.pdf",
-    },
-    {
-        "id": "grading_policy",
-        "title": "Grading Policy Summary (Gymkhana Students' Council Portal)",
-        "url": "https://gymkhana.iitb.ac.in/~scp/scp/pdfs/grading.pdf",
-    },
-]
