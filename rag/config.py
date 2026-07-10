@@ -42,8 +42,25 @@ MIN_SIMILARITY_THRESHOLD = 0.30
 # ---------------------------------------------------------------------------
 # LLM (Groq)
 # ---------------------------------------------------------------------------
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
-GROQ_MODEL = os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
+def _get_secret(key: str, default: str = "") -> str:
+    """
+    Resolves a secret from, in order: environment variable (local .env via
+    python-dotenv, or any host that injects env vars), then Streamlit's own
+    secrets store (used by Streamlit Community Cloud's "Secrets" panel).
+    """
+    value = os.environ.get(key, "")
+    if value:
+        return value
+    try:
+        import streamlit as st  # imported lazily - not a dependency for CLI scripts
+
+        return st.secrets.get(key, default)
+    except Exception:
+        return default
+
+
+GROQ_API_KEY = _get_secret("GROQ_API_KEY")
+GROQ_MODEL = _get_secret("GROQ_MODEL", "llama-3.3-70b-versatile")
 
 SYSTEM_PROMPT = """You are IITB Insti-Assist, an academic-rules assistant for \
 students of IIT Bombay. You answer ONLY using the CONTEXT provided below, \
