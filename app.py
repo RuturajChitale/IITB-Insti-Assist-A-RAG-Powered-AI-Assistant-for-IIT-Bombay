@@ -23,15 +23,30 @@ st.caption(
     "official UG/PG/PhD rulebooks, grading policy, and the academic calendar."
 )
 
+
+@st.cache_resource(show_spinner=False)
+def bootstrap_knowledge_base() -> None:
+    """
+    On a fresh deployment (e.g. Streamlit Community Cloud) there's no way
+    to run the setup scripts by hand first, so build the index once here,
+    the first time the app boots. @st.cache_resource means this only runs
+    once per running instance, not on every rerun.
+    """
+    from scripts import build_index, download_sources, ingest
+
+    download_sources.download_all()
+    ingest.main()
+    build_index.main()
+
+
 if not INDEX_PATH.exists() or not INDEX_META_PATH.exists():
-    st.error(
-        "No index found yet. Run these once from the project root before "
-        "starting the app:\n\n"
-        "```\npython scripts/download_sources.py\n"
-        "python scripts/ingest.py\n"
-        "python scripts/build_index.py\n```"
-    )
-    st.stop()
+    with st.spinner(
+        "First-time setup: downloading official IITB documents, chunking "
+        "them, and building the search index. This can take a couple of "
+        "minutes and only happens once."
+    ):
+        bootstrap_knowledge_base()
+    st.rerun()
 
 with st.sidebar:
     st.header("About this scope")
