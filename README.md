@@ -1,5 +1,7 @@
 # 🎓 IITB Insti-Assist — Academic Assistant
 
+**🌐 Live Demo:** https://iitb-insti-assist-a-rag-powered-ai-assistant-for-iit-bombay-id.streamlit.app/
+
 A Retrieval-Augmented Generation (RAG) assistant that answers questions about
 **IIT Bombay's academic rules** — grading, CPI/SPI, course registration
 categories, examination rules, and the academic calendar — grounded in the
@@ -13,7 +15,7 @@ Built for the **Final Project of WnCC Learners' Space — Machine Learning
 
 ## How it works
 
-```
+```text
 data/raw/*.pdf  →  ingest.py  →  data/processed/chunks.jsonl
                         │
                         ▼
@@ -39,24 +41,24 @@ academic calendar, exam rules) — see `WRITEUP.md` for why.
 
 ## Project structure
 
-```
+```text
 iitb-insti-assist/
 ├── app.py                     # Streamlit UI
 ├── requirements.txt
-├── .env.example                # copy to .env and add your Groq API key
+├── .env.example               # copy to .env and add your Groq API key
 ├── rag/
-│   ├── config.py               # paths, model names, prompt, source list
-│   ├── retriever.py            # FAISS load + top-k semantic search
-│   ├── llm.py                  # Groq chat completion call
-│   └── pipeline.py             # retrieve -> groundedness check -> generate
+│   ├── config.py              # paths, model names, prompt, source list
+│   ├── retriever.py           # FAISS load + top-k semantic search
+│   ├── llm.py                 # Groq chat completion call
+│   └── pipeline.py            # retrieve -> groundedness check -> generate
 ├── scripts/
-│   ├── download_sources.py     # downloads the 6 official IITB PDFs
-│   ├── ingest.py               # PDF -> cleaned, overlapping text chunks
-│   └── build_index.py          # embeds chunks + builds the FAISS index
+│   ├── download_sources.py    # downloads the 6 official IITB PDFs
+│   ├── ingest.py              # PDF -> cleaned, overlapping text chunks
+│   └── build_index.py         # embeds chunks + builds the FAISS index
 ├── data/
-│   ├── raw/                    # downloaded PDFs (gitignored, regenerated)
-│   └── processed/              # chunks.jsonl + faiss.index (gitignored, regenerated)
-└── WRITEUP.md                  # 2-page project write-up
+│   ├── raw/                   # downloaded PDFs (gitignored, regenerated)
+│   └── processed/             # chunks.jsonl + faiss.index (gitignored, regenerated)
+└── WRITEUP.md                 # 2-page project write-up
 ```
 
 The PDFs and the built index are **not committed to git** — they're
@@ -79,7 +81,7 @@ pip install -r requirements.txt
 
 ### 2. Get a free Groq API key
 
-Sign up at [console.groq.com](https://console.groq.com/keys) and create an
+Sign up at https://console.groq.com/keys and create an
 API key (Groq's free tier is generous and doesn't hit quota walls the way
 Gemini's free tier does).
 
@@ -117,7 +119,7 @@ Open the local URL Streamlit prints (usually `http://localhost:8501`).
 - "How many courses can I take as Guided Study?"
 - "When does the mid-semester exam start in Autumn 2025-26?"
 - "What happens if I miss a semester-end exam for medical reasons?"
-- "What's the mess bill for hostel 4?" ← should get **"I don't know"**,
+- "What's the mess bill for Hostel 4?" ← should get **"I don't know"**,
   since hostel/mess info isn't in the ingested academic documents.
 
 ---
@@ -131,7 +133,7 @@ documents (see `rag/config.py::SOURCES` for the live links):
 2. Ph.D. Programme Rules & Regulations
 3. M.Tech./M.Phil./Dual Degree PG Rules & Regulations
 4. M.Eng. Programme Rules
-5. Academic Calendar 2025-26
+5. Academic Calendar 2025–26
 6. Grading Policy Summary
 
 ---
